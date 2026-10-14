@@ -93,11 +93,10 @@ it that way.
 - Tests live in `tests/test_*.c`.
 - New code must build and pass in **both** atomicity modes
   (`-Datomicity_mode=c11` and `-Datomicity_mode=volatile`).
-- New code must also build under the TI C2000 cross configuration
-  (library target only) so the C2000 consumer is not regressed. The
-  GitHub Actions runner does not have the TI toolchain, so this is a
-  **local pre-submit** check, not a CI gate — run it before opening
-  the PR if your change touches `src/` or `include/`.
+- New code must also build with the TI C2000 code generation tools
+  (library target only, warnings as errors). CI cross-builds with CGT
+  22.6.2 and 25.11.1 under `--abi=coffabi` and `--abi=eabi` for both
+  lookup strategies.
 - Run the host suite with ASan + UBSan before submitting.
 - CI also gates on `cppcheck` (warning + style + performance + portability)
   and on `valgrind memcheck` (leak-check full, errors-for-leak-kinds=all,
@@ -166,8 +165,8 @@ change is needed, not _what_ the diff already shows.
 - All CI checks must pass: host tests in both atomicity modes, the
   release build matrix, cppcheck, valgrind memcheck (both atomicity
   modes), ThreadSanitizer on the concurrency test, and the 16-bit MAU
-  simulation. ASan + UBSan are folded into the host test job. The TI
-  C2000 cross-build is local-only.
+  simulation, and the TI C2000 cross-build. ASan + UBSan are folded
+  into the host test job.
 - Any new MISRA deviation must be flagged in the PR description and
   added to the deviation record in `src/pool.c`.
 
