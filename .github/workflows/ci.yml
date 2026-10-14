@@ -265,9 +265,9 @@ jobs:
           path: build/meson-logs/testlog.txt
 
   # ---------------------------------------------------------------------------
-  # Code coverage gate. Builds with gcov instrumentation, runs the full
-  # test suite, and fails the job if line or branch coverage drops below
-  # the threshold.
+  # Code coverage gate. Builds both lookup strategies with gcov
+  # instrumentation, runs the full test suite for each, and fails the job
+  # unless line and branch coverage across both reach 100 %.
   # ---------------------------------------------------------------------------
   coverage:
     name: "Coverage gate"
@@ -287,19 +287,18 @@ jobs:
       - name: Install meson and gcovr
         run: pip install meson gcovr
 
-      - name: Configure (coverage)
-        run: >
-          meson setup build
-          --buildtype=debug
-          -Dbuild_tests=true
-          -Db_coverage=true
-          -Dc_args=-fprofile-update=atomic
-
-      - name: Build
-        run: meson compile -C build
-
-      - name: Run tests
-        run: meson test -C build --verbose
+      - name: Build and test both lookup strategies (coverage)
+        run: |
+          for strategy in linear hash; do
+            meson setup "build-$strategy" \
+              --buildtype=debug \
+              -Dbuild_tests=true \
+              -Db_coverage=true \
+              -Dc_args=-fprofile-update=atomic \
+              -Dlookup_strategy=$strategy
+            meson compile -C "build-$strategy"
+            meson test -C "build-$strategy" --verbose
+          done
 
       - name: Generate coverage report
         run: |
@@ -311,8 +310,9 @@ jobs:
             --html-details coverage-report/index.html \
             --txt coverage-report/summary.txt \
             --print-summary \
-            --fail-under-line 80 \
-            --fail-under-branch 70
+            --fail-under-line 100 \
+            --fail-under-branch 100 \
+            build-linear build-hash
 
       - name: Upload coverage report
         if: always()

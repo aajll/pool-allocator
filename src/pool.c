@@ -36,15 +36,6 @@
  *                    NULL ID pointer, out-of-range ID, not-USED
  *                    slot, full pool, double-free, uninitialised
  *                    garbage state).
- *
- *    Note on defensive bounds checks:
- *      @c pool_release and @c pool_get_pointer each contain an
- *      @c offset > (block_size - POOL_ITEM_SIZE) check after the
- *      @c id >= POOL_MAX_SLOTS guard. cppcheck (correctly) flags the
- *      inner check as redundant because the prior guard proves the
- *      condition is unreachable. The check is kept as defence in depth
- *      and is silenced with an inline
- *      @c cppcheck-suppress at the site.
  */
 
 /* ================ INCLUDES ================================================ */
@@ -246,23 +237,10 @@ pool_release(pool_handle_t p_pool, const pool_id_t id)
          * for cross-context visibility.
          */
         {
-                const size_t block_size = sizeof(p_pool->storage.bytes);
                 const size_t offset = ((size_t)id) * ((size_t)POOL_ITEM_SIZE);
                 size_t k;
 
-                /*
-                 * Defence in depth: the `id >= POOL_MAX_SLOTS` check above
-                 * already proves this branch is unreachable, but we keep it
-                 * to guarantee `offset + POOL_ITEM_SIZE <= block_size` at the
-                 * point of access.
-                 */
-                /* cppcheck-suppress arrayIndexOutOfBoundsCond */
-                if (offset > (block_size - (size_t)POOL_ITEM_SIZE)) {
-                        return POOL_ERR_INVALID_ID;
-                }
-
                 volatile pool_byte_t *const p_mem_ptr =
-                    /* cppcheck-suppress arrayIndexOutOfBoundsCond */
                     &p_pool->storage.bytes[offset];
 
                 for (k = 0U; k < (size_t)POOL_ITEM_SIZE; k++) {
@@ -290,19 +268,8 @@ pool_get_pointer(pool_handle_t p_pool, const pool_id_t id)
                 return NULL;
         }
 
-        const size_t block_size = sizeof(p_pool->storage.bytes);
         const size_t offset = ((size_t)id) * ((size_t)POOL_ITEM_SIZE);
 
-        /*
-         * Defence in depth: the `id >= POOL_MAX_SLOTS` check above already
-         * proves this branch is unreachable, but it is kept as a guard.
-         */
-        /* cppcheck-suppress arrayIndexOutOfBoundsCond */
-        if (offset > (block_size - (size_t)POOL_ITEM_SIZE)) {
-                return NULL;
-        }
-
-        /* cppcheck-suppress arrayIndexOutOfBoundsCond */
         return &p_pool->storage.bytes[offset];
 }
 
@@ -316,11 +283,6 @@ pool_get_pointer_checked(pool_handle_t p_pool, const pool_id_t id,
 
         if (p_ptr == NULL) {
                 return POOL_ERR_NULL_PTR;
-        }
-
-        if (id >= POOL_MAX_SLOTS) {
-                *p_ptr = NULL;
-                return POOL_ERR_INVALID_ID;
         }
 
         *p_ptr = pool_get_pointer(p_pool, id);

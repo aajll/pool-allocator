@@ -91,6 +91,7 @@ it that way.
 
 - Add a test for every bug fix and every new feature.
 - Tests live in `tests/test_*.c`.
+- CI gates line and branch coverage at 100 % across both lookup strategies. Every new branch needs a test that fails when the branch is broken.
 - New code must build and pass in **both** atomicity modes
   (`-Datomicity_mode=c11` and `-Datomicity_mode=volatile`).
 - New code must also build with the TI C2000 code generation tools
@@ -126,6 +127,16 @@ meson setup build_tsan --buildtype=debug -Dbuild_tests=true \
                        -Dtsan=true -Datomicity_mode=c11
 meson compile -C build_tsan
 meson test -C build_tsan --verbose
+
+# Coverage across both lookup strategies (100 % line and branch)
+for strategy in linear hash; do
+  meson setup "build-$strategy" --buildtype=debug -Dbuild_tests=true \
+    -Db_coverage=true -Dlookup_strategy=$strategy
+  meson compile -C "build-$strategy"
+  meson test -C "build-$strategy"
+done
+gcovr --root . --filter 'src/' --filter 'include/' \
+      --fail-under-line 100 --fail-under-branch 100 build-linear build-hash
 
 # 16-bit MAU simulation (exercises the C2000 storage path on the host)
 meson setup build --buildtype=debug -Dbuild_tests=true
@@ -165,7 +176,8 @@ change is needed, not _what_ the diff already shows.
 - All CI checks must pass: host tests in both atomicity modes, the
   release build matrix, cppcheck, valgrind memcheck (both atomicity
   modes), ThreadSanitizer on the concurrency test, and the 16-bit MAU
-  simulation, and the TI C2000 cross-build. ASan + UBSan are folded
+  simulation, the TI C2000 cross-build, and the 100 % line and branch
+  coverage gate. ASan + UBSan are folded
   into the host test job.
 - Any new MISRA deviation must be flagged in the PR description and
   added to the deviation record in `src/pool.c`.
