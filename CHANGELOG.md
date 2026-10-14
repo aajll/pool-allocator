@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- CI cross-builds the library with TI C2000 CGT 22.6.2 and 25.11.1 under the COFF and EABI object formats and both lookup strategies, with warnings as errors.
+
+### Fixed
+
+- `pool_footprint_t::addr_unit_bits` is `uint_least8_t` instead of `uint8_t`, so `pool.h` compiles where `CHAR_BIT == 16`. Byte-addressed targets see the same type.
+
 ### Changed
 
 - Added security policy, SPDX headers, cleaned ignore rules, README badge correction, and license copyright normalisation.

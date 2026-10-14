@@ -349,7 +349,7 @@ pool_footprint(void)
         footprint.overhead_units = instance_units - POOL_PAYLOAD_UNITS;
         footprint.capacity = (pool_id_t)POOL_MAX_SLOTS;
         footprint.item_size = (uint16_t)POOL_ITEM_SIZE;
-        footprint.addr_unit_bits = (uint8_t)POOL_ADDR_UNIT_BITS;
+        footprint.addr_unit_bits = (uint_least8_t)POOL_ADDR_UNIT_BITS;
 
         return footprint;
 }

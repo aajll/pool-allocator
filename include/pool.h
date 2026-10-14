@@ -176,7 +176,7 @@ typedef struct {
         size_t overhead_units;       /**< status array + cursor + padding   */
         pool_id_t capacity;          /**< POOL_MAX_SLOTS                     */
         uint16_t item_size;          /**< POOL_ITEM_SIZE                     */
-        uint8_t addr_unit_bits;      /**< POOL_ADDR_UNIT_BITS (8 or 16)      */
+        uint_least8_t addr_unit_bits; /**< POOL_ADDR_UNIT_BITS (8 or 16)     */
 } pool_footprint_t;
 
 /**
