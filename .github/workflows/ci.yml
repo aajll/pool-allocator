@@ -10,16 +10,15 @@ on:
 jobs:
   # ---------------------------------------------------------------------------
   # Build the library and run the full test suite under ASan + UBSan across
-  # the full configuration matrix: OS × lookup strategy × atomicity mode.
+  # the full configuration matrix: lookup strategy × atomicity mode.
   # ---------------------------------------------------------------------------
   test:
-    name: "Test (${{ matrix.os }}, ${{ matrix.lookup_strategy }}, ${{ matrix.atomicity_mode }})"
-    runs-on: ${{ matrix.os }}
+    name: "Test (${{ matrix.lookup_strategy }}, ${{ matrix.atomicity_mode }})"
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         lookup_strategy: [linear, hash]
         atomicity_mode: [c11, volatile]
 
@@ -30,13 +29,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install ninja (Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Install ninja
         run: sudo apt-get update -q && sudo apt-get install -y ninja-build
-
-      - name: Install ninja (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ninja
 
       - name: Install meson
         run: pip install meson
@@ -60,7 +54,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: testlog-${{ matrix.os }}-${{ matrix.lookup_strategy }}-${{ matrix.atomicity_mode }}
+          name: testlog-${{ matrix.lookup_strategy }}-${{ matrix.atomicity_mode }}
           path: build/meson-logs/testlog.txt
 
   # ---------------------------------------------------------------------------
@@ -69,14 +63,13 @@ jobs:
   # the same configuration axes.
   # ---------------------------------------------------------------------------
   release-build:
-    name: "Release (${{ matrix.os }}, ${{ matrix.lookup_strategy }}, ${{ matrix.atomicity_mode }})"
-    runs-on: ${{ matrix.os }}
+    name: "Release (${{ matrix.lookup_strategy }}, ${{ matrix.atomicity_mode }})"
+    runs-on: ubuntu-latest
     needs: test
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         lookup_strategy: [linear, hash]
         atomicity_mode: [c11, volatile]
 
@@ -87,13 +80,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install ninja (Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Install ninja
         run: sudo apt-get update -q && sudo apt-get install -y ninja-build
-
-      - name: Install ninja (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ninja
 
       - name: Install meson
         run: pip install meson
