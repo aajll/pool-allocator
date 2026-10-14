@@ -33,11 +33,10 @@ extern "C" {
  *    be drop-in safe in deeply embedded and audited firmware: no dynamic
  *    memory, no VLAs, no recursion, no data-dependent loop bounds.
  *
- *    ## MISRA C:2023 / IEC 61508 awareness
+ *    ## MISRA C:2023 awareness
  *
- *    The implementation is written with MISRA C:2023 in mind and is
- *    intended to be used in IEC 61508 environments. The codebase is
- *    not formally certified. The one intentional, repository-wide
+ *    The implementation is written with MISRA C:2023 in mind. The one
+ *    intentional, repository-wide
  *    advisory deviation is Rule 15.5 (single point of exit); guard
  *    clauses use early @c return at API boundaries.
  *

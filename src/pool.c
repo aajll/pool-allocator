@@ -7,7 +7,7 @@
  *    Implementation of the static object pool allocator.
  *
  *    See @c pool.h for the public contract, the threading model, and
- *    the MISRA C:2023 / IEC 61508 awareness notes. This translation
+ *    the MISRA C:2023 awareness notes. This translation
  *    unit holds only the internal slot bookkeeping and the find /
  *    acquire / release machinery.
  *
@@ -42,8 +42,8 @@
  *      @c offset > (block_size - POOL_ITEM_SIZE) check after the
  *      @c id >= POOL_MAX_SLOTS guard. cppcheck (correctly) flags the
  *      inner check as redundant because the prior guard proves the
- *      condition is unreachable. The check is kept for IEC 61508
- *      defensive coding posture and is silenced with an inline
+ *      condition is unreachable. The check is kept as defence in depth
+ *      and is silenced with an inline
  *      @c cppcheck-suppress at the site.
  */
 
@@ -254,7 +254,7 @@ pool_release(pool_handle_t p_pool, const pool_id_t id)
                  * Defence in depth: the `id >= POOL_MAX_SLOTS` check above
                  * already proves this branch is unreachable, but we keep it
                  * to guarantee `offset + POOL_ITEM_SIZE <= block_size` at the
-                 * point of access, in line with IEC 61508 defensive coding.
+                 * point of access.
                  */
                 /* cppcheck-suppress arrayIndexOutOfBoundsCond */
                 if (offset > (block_size - (size_t)POOL_ITEM_SIZE)) {
@@ -295,8 +295,7 @@ pool_get_pointer(pool_handle_t p_pool, const pool_id_t id)
 
         /*
          * Defence in depth: the `id >= POOL_MAX_SLOTS` check above already
-         * proves this branch is unreachable, but we keep it for IEC 61508
-         * defensive coding posture.
+         * proves this branch is unreachable, but it is kept as a guard.
          */
         /* cppcheck-suppress arrayIndexOutOfBoundsCond */
         if (offset > (block_size - (size_t)POOL_ITEM_SIZE)) {

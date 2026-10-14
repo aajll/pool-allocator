@@ -19,9 +19,8 @@ A static object pool allocator in C for safety-critical embedded systems.
 - **Cross-platform** — auto-detected addressing model: works on any C11
   target with an 8-bit or 16-bit minimum addressable unit. Validated on
   x86_64, with the TI C2000 family as a first-class supported target.
-- **MISRA C:2023 / IEC 61508 aware** — written with safety-critical
-  environments in mind. Not formally certified; one acknowledged
-  advisory deviation (Rule 15.5).
+- **MISRA C:2023 aware** — one acknowledged advisory deviation
+  (Rule 15.5).
 - **Explicit error codes** — every public function returns
   `pool_status_t`; no `errno`, no exceptions.
 
@@ -284,10 +283,9 @@ bits). The pool handles this via `pool_platform.h`:
   ships no `<stdatomic.h>`. This is correct on the single-core C28x
   core where naturally-aligned word stores are indivisible.
 
-## MISRA C:2023 / IEC 61508 awareness
+## MISRA C:2023 awareness
 
-The library is written with MISRA C:2023 in mind and is intended for
-use in IEC 61508 environments. It is **not** formally certified.
+The library is written with MISRA C:2023 in mind.
 
 - One intentional, repository-wide advisory deviation: **Rule 15.5**
   (single point of exit). Guard clauses use early `return` at API
