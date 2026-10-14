@@ -10,11 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - CI cross-builds the library with TI C2000 CGT 22.6.2 and 25.11.1 under the COFF and EABI object formats and both lookup strategies, with warnings as errors.
 
+- Tests for `pool_release` with a NULL handle, `pool_get_pointer_checked` with a NULL handle, NULL output pointer or out-of-range ID, and the hash strategy's recovery from an out-of-range cursor.
+
 ### Fixed
 
 - `pool_footprint_t::addr_unit_bits` is `uint_least8_t` instead of `uint8_t`, so `pool.h` compiles where `CHAR_BIT == 16`. Byte-addressed targets see the same type.
 
 ### Changed
+
+- CI gates line and branch coverage at 100 % across both lookup strategies, up from 80 % line and 70 % branch on the linear strategy alone.
+- `pool_release` and `pool_get_pointer` no longer repeat the slot bounds check after the ID range check, and `pool_get_pointer_checked` relies on `pool_get_pointer` for the ID range check. Results are unchanged.
 
 - Added security policy, SPDX headers, cleaned ignore rules, README badge correction, and license copyright normalisation.
 

@@ -282,7 +282,14 @@ test_pool_release_invalid_id(void)
         return 0;
 }
 
-/** Test 9: Verify double-free is detected and rejected */
+/** Test 9: Verify release rejects a NULL handle */
+static int
+test_pool_release_null_pool(void)
+{
+        return (pool_release(NULL, 0U) == POOL_ERR_NULL_PTR) ? 0 : 1;
+}
+
+/** Test 10: Verify double-free is detected and rejected */
 static int
 test_pool_double_free(void)
 {
@@ -302,7 +309,7 @@ test_pool_double_free(void)
         return (status == POOL_ERR_INVALID_ID) ? 0 : 1;
 }
 
-/** Test 10: Verify get_pointer rejects invalid/bounds IDs and NULL pool */
+/** Test 11: Verify get_pointer rejects invalid/bounds IDs and NULL pool */
 static int
 test_pool_get_pointer_invalid_id(void)
 {
@@ -333,7 +340,7 @@ test_pool_get_pointer_invalid_id(void)
         return 0;
 }
 
-/** Test 11: Verify checked pointer accessor enforces allocation state */
+/** Test 12: Verify checked pointer accessor enforces allocation state */
 static int
 test_pool_get_pointer_checked(void)
 {
@@ -377,7 +384,66 @@ test_pool_get_pointer_checked(void)
         return 0;
 }
 
-/** Test 12: Verify operations fail on uninitialized pool with garbage state */
+/** Test 13: Verify the checked accessor rejects bad arguments */
+static int
+test_pool_get_pointer_checked_bad_args(void)
+{
+        pool_handle_t pool = get_test_pool();
+
+        memset(&g_pool, 0, sizeof(g_pool));
+        pool_init(pool);
+
+        pool_id_t id = 0U;
+        if (pool_acquire(pool, &id) != POOL_OK) {
+                return 1;
+        }
+
+        void *ptr = (void *)0x1;
+        if (pool_get_pointer_checked(NULL, id, &ptr) != POOL_ERR_NULL_PTR) {
+                return 1;
+        }
+        if (ptr != (void *)0x1) {
+                return 1;
+        }
+
+        if (pool_get_pointer_checked(pool, id, NULL) != POOL_ERR_NULL_PTR) {
+                return 1;
+        }
+
+        if (pool_get_pointer_checked(pool, (pool_id_t)POOL_MAX_SLOTS, &ptr)
+            != POOL_ERR_INVALID_ID) {
+                return 1;
+        }
+
+        return (ptr == NULL) ? 0 : 1;
+}
+
+/** Test 14: Verify the hash strategy recovers from a bad cursor */
+static int
+test_pool_hash_cursor_out_of_range(void)
+{
+#if POOL_LOOKUP_STRATEGY == POOL_LOOKUP_HASH
+        pool_handle_t pool = get_test_pool();
+
+        memset(&g_pool, 0, sizeof(g_pool));
+        pool_init(pool);
+
+        /* An all-ones cursor, as read back from erased NVM. */
+        g_pool.next_index = (pool_id_t)UINT16_MAX;
+
+        pool_id_t id = (pool_id_t)POOL_MAX_SLOTS;
+        if (pool_acquire(pool, &id) != POOL_OK) {
+                return 1;
+        }
+        if ((id != 0U)
+            || (g_pool.next_index != (pool_id_t)(1U % POOL_MAX_SLOTS))) {
+                return 1;
+        }
+#endif
+        return 0;
+}
+
+/** Test 15: Verify operations fail on uninitialized pool with garbage state */
 static int
 test_pool_uninitialized_garbage(void)
 {
@@ -408,7 +474,7 @@ test_pool_uninitialized_garbage(void)
         return 0;
 }
 
-/** Test 13: Verify pointer alignment for all slots */
+/** Test 16: Verify pointer alignment for all slots */
 static int
 test_pool_alignment(void)
 {
@@ -431,7 +497,7 @@ test_pool_alignment(void)
         return 0;
 }
 
-/** Test 14: Verify pool_release clears the entire item memory */
+/** Test 17: Verify pool_release clears the entire item memory */
 static int
 test_pool_release_clears_memory(void)
 {
@@ -468,7 +534,7 @@ test_pool_release_clears_memory(void)
         return 0;
 }
 
-/** Test 15: Verify no overlap between adjacent slots */
+/** Test 18: Verify no overlap between adjacent slots */
 static int
 test_pool_no_overlap(void)
 {
@@ -517,7 +583,7 @@ test_pool_no_overlap(void)
         return 0;
 }
 
-/** Test 16: Verify the static footprint descriptor is self-consistent */
+/** Test 19: Verify the static footprint descriptor is self-consistent */
 static int
 test_pool_footprint(void)
 {
@@ -566,7 +632,7 @@ test_pool_footprint(void)
 int
 main(void)
 {
-        printf("Running %d unit tests...\n\n", 16);
+        printf("Running %d unit tests...\n\n", 19);
 
         RUN_TEST(test_pool_init);
         RUN_TEST(test_pool_init_null_ptr);
@@ -576,9 +642,12 @@ main(void)
         RUN_TEST(test_pool_acquire_full_pool);
         RUN_TEST(test_pool_release_success);
         RUN_TEST(test_pool_release_invalid_id);
+        RUN_TEST(test_pool_release_null_pool);
         RUN_TEST(test_pool_double_free);
         RUN_TEST(test_pool_get_pointer_invalid_id);
         RUN_TEST(test_pool_get_pointer_checked);
+        RUN_TEST(test_pool_get_pointer_checked_bad_args);
+        RUN_TEST(test_pool_hash_cursor_out_of_range);
         RUN_TEST(test_pool_uninitialized_garbage);
         RUN_TEST(test_pool_alignment);
         RUN_TEST(test_pool_release_clears_memory);
