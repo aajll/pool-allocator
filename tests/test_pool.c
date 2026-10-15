@@ -1,4 +1,6 @@
 /**
+ * SPDX-License-Identifier: MIT
+ *
  * @file test_pool.c
  * @brief Unit tests for the static object pool allocator library.
  *

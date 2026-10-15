@@ -1,4 +1,6 @@
 /**
+ * SPDX-License-Identifier: MIT
+ *
  * @file test_pool_concurrency.c
  * @brief Single-writer / many-readers stress test for the pool allocator.
  *

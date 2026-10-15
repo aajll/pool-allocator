@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 test_exe = executable(
   'test_pool',
   'test_pool.c',

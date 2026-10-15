@@ -1,0 +1,65 @@
+{
+  "schema": "misch/baseline@2",
+  "fingerprints": {
+    "19244ebf2b42": {
+      "rule_id": "misra-c2012-20.7",
+      "file": "include/pool_platform.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 2
+    },
+    "51d42da39417": {
+      "rule_id": "misra-c2012-1.4",
+      "file": "include/pool.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 1
+    },
+    "690c631a5c39": {
+      "rule_id": "misra-c2012-10.4",
+      "file": "include/pool.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 2
+    },
+    "7964280c513e": {
+      "rule_id": "misra-c2012-10.4",
+      "file": "src/pool.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 5
+    },
+    "82c36c2670ba": {
+      "rule_id": "misra-c2012-2.3",
+      "file": "src/pool.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 1
+    },
+    "858aa2371c18": {
+      "rule_id": "misra-c2012-15.5",
+      "file": "src/pool.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 13
+    },
+    "8d6dcb773005": {
+      "rule_id": "misra-c2012-12.1",
+      "file": "include/pool_platform.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 1
+    },
+    "aa63907553c8": {
+      "rule_id": "misra-c2012-19.2",
+      "file": "include/pool.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 2
+    },
+    "c5e721187f65": {
+      "rule_id": "misra-c2012-2.4",
+      "file": "src/pool.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 1
+    },
+    "f0384398b698": {
+      "rule_id": "misra-c2012-8.7",
+      "file": "src/pool.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 5
+    }
+  }
+}
