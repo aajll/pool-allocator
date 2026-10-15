@@ -33,7 +33,7 @@ meson compile -C build-tsan && meson test -C build-tsan test_pool_concurrency
 # Valgrind (no sanitisers; ASan and Valgrind are incompatible)
 meson setup build-mem --buildtype=debug -Dbuild_tests=true
 meson compile -C build-mem
-meson test -C build-mem --wrapper='valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all'
+meson test -C build-mem --no-suite docs --wrapper='valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all'
 
 # Coverage across both lookup strategies (CI gate is 100% line and branch)
 for strategy in linear hash; do

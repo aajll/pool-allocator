@@ -42,7 +42,8 @@ test_concurrency_exe = executable(
 test('test_pool_concurrency', test_concurrency_exe, timeout: 60)
 
 # Compiles every C block in README.md, CONTRIBUTING.md and docs/ against the
-# public headers, so a documented signature cannot drift from the code.
+# public headers, so a documented signature cannot drift from the code. The
+# 'docs' suite runs a compiler, not library code, so memory checks skip it.
 test(
   'pool docs examples',
   import('python').find_installation(),
@@ -63,5 +64,6 @@ test(
     '-I' + (meson.project_source_root() / 'include'),
     '-c', '{source}', '-o', '{object}',
   ],
+  suite: 'docs',
   timeout: 60,
 )
