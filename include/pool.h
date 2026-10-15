@@ -29,12 +29,10 @@
  *    be drop-in safe in deeply embedded and audited firmware: no dynamic
  *    memory, no VLAs, no recursion, no data-dependent loop bounds.
  *
- *    ## MISRA C:2023 awareness
+ *    ## MISRA C:2023
  *
- *    The implementation is written with MISRA C:2023 in mind. The one
- *    intentional, repository-wide
- *    advisory deviation is Rule 15.5 (single point of exit); guard
- *    clauses use early @c return at API boundaries.
+ *    The misch baselines of accepted findings, listed by rule, are in
+ *    docs/design.md.
  *
  *    ## Concurrency model and threading contract
  *
@@ -164,7 +162,7 @@ struct pool_t {
 
 /*
  * Optional RAM-budget guard. Define POOL_RAM_BUDGET_OCTETS (via a
- * compiler flag or before including this header) to fail the build when
+ * compiler flag) to fail the build when
  * a single pool instance would exceed the budget. The comparison is in
  * octets, so the same number is meaningful on 8-bit and 16-bit MAU
  * targets. sizeof is a constant expression, so this is a pure

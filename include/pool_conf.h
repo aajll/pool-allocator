@@ -6,10 +6,12 @@
  * @brief
  *    Compile-time configuration for the pool allocator library.
  *
- *    Users may override any option below by defining the macro before
- *    including this header, or via a compiler flag (e.g.
- *    -DPOOL_MAX_SLOTS=64). The #ifndef guards ensure that user-supplied
- *    definitions take precedence.
+ *    Each option below sits behind an #ifndef guard, so a compiler flag
+ *    (e.g. -DPOOL_MAX_SLOTS=64) replaces the default. POOL_MAX_SLOTS,
+ *    POOL_ITEM_SIZE, the atomicity mode, POOL_NO_MAX_ALIGN_T and
+ *    POOL_SIMULATE_16BIT_MAU shape struct pool_t, so they must be passed
+ *    as -D flags with the same value to the library and every caller;
+ *    see docs/integration.md.
  *
  *    The Meson build front-end exposes the same options as project
  *    options; see meson_options.txt.

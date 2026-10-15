@@ -6,36 +6,10 @@
  * @brief
  *    Implementation of the static object pool allocator.
  *
- *    See @c pool.h for the public contract, the threading model, and
- *    the MISRA C:2023 awareness notes. This translation
+ *    See @c pool.h for the public contract and the threading model,
+ *    and docs/design.md for the MISRA C:2023 baselines. This translation
  *    unit holds only the internal slot bookkeeping and the find /
  *    acquire / release machinery.
- *
- * @par MISRA C:2023 Deviation Record
- *
- *    Deviations are intentional and have been reviewed. Each site is
- *    also tagged in-line at point-of-use (search for "MISRA <rule>").
- *
- *    Rule 15.5 (advisory) - A function should have a single point of
- *                            exit at its end.
- *      Sites:        pool_init, pool_acquire, pool_release,
- *                    pool_get_pointer, pool_get_pointer_checked,
- *                    pool_find_free_slot, pool_validate_handle,
- *                    pool_validate_id_ptr.
- *      Justification: Early-return-on-error guard clauses are the
- *                    project's idiomatic control flow. Refactoring to
- *                    a single-exit pattern would either deeply nest
- *                    the validation arms (hurting readability) or
- *                    introduce a goto-cleanup (Rule 15.1 deviation),
- *                    trading one advisory deviation for another with
- *                    no readability gain.
- *      Mitigation:   All exit points return one of the documented
- *                    @c pool_status_t codes (or @c NULL for the
- *                    pointer accessor). Every guard-clause path is
- *                    exercised by @c tests/test_pool.c (NULL handle,
- *                    NULL ID pointer, out-of-range ID, not-USED
- *                    slot, full pool, double-free, uninitialised
- *                    garbage state).
  */
 
 /* ================ INCLUDES ================================================ */
