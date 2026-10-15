@@ -35,18 +35,18 @@ Put the repository in `subprojects/pool_allocator`, as a checkout or through a w
 pool_dep = dependency('pool', fallback: ['pool_allocator', 'pool_dep'])
 ```
 
-The build calls `meson.override_dependency('pool', ...)`, so other subprojects in the same build find `pool` by name. `pool_dep` links the static library and adds the include directories, including the one that holds the generated version header.
+The build calls `meson.override_dependency('pool', ...)`, so other subprojects in the same build find `pool` by name. `pool_dep` links the static library and adds the include directory.
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `pool_max_slots` | `16` | Sets `POOL_MAX_SLOTS` for the library build. |
-| `pool_item_size` | `64` | Sets `POOL_ITEM_SIZE` for the library build. |
+| `pool_max_slots` | `16` | Sets `POOL_MAX_SLOTS` for the library and its consumers. |
+| `pool_item_size` | `64` | Sets `POOL_ITEM_SIZE` for the library and its consumers. |
 | `lookup_strategy` | `linear` | `linear` or `hash`; sets `POOL_LOOKUP_STRATEGY`. |
-| `atomicity_mode` | `auto` | `auto`, `c11` or `volatile`. `auto` leaves the choice to `pool_conf.h`; the others define `POOL_USE_C11_ATOMIC` or `POOL_USE_VOLATILE_ATOMIC`. |
+| `atomicity_mode` | `auto` | `auto`, `c11` or `volatile`. `auto` leaves the choice to `pool_conf.h`; the others define `POOL_USE_C11_ATOMIC` or `POOL_USE_VOLATILE_ATOMIC` for the library and its consumers. |
 | `build_tests` | `false` | Builds the unit, 16-bit storage and concurrency tests and the documentation example test. |
 | `tsan` | `false` | Builds the concurrency test under ThreadSanitizer. |
 
-The options apply to the library's own compilation only; `pool_dep` does not pass them on. A consumer that changes the slot count or slot size must therefore define the same value for its own sources, as described under [Configuration](#configuration).
+`pool_dep` passes `POOL_MAX_SLOTS`, `POOL_ITEM_SIZE` and the atomicity define to every target that uses it, so the consumer's `struct pool_t` has the library's layout. `POOL_LOOKUP_STRATEGY` stays private to the library.
 
 ## Installed package
 
@@ -64,7 +64,7 @@ The install contains the static archive `libpool.a`, the headers in a `pool/` su
 #include <pool/pool.h>
 ```
 
-An installed library keeps the configuration it was built with, and `pool.pc` does not record it. Build applications with the same definitions.
+`pool.pc` records the slot count, slot size and atomicity define the library was built with, so `pkg-config --cflags pool` gives an application the same layout.
 
 ## Configuration
 
@@ -74,11 +74,13 @@ Most of them shape `struct pool_t`, which the caller allocates and the library a
 
 `POOL_LOOKUP_STRATEGY` is read only by `src/pool.c`, and `POOL_RAM_BUDGET_OCTETS` only adds a compile-time check, so a mismatch in either is harmless.
 
-In a Meson build, set the subproject option and the matching definition in the top-level project's `c_args`, which apply to the consumer and to subprojects:
+In a Meson build, set the subproject option, and `pool_dep` carries the value to the consumer:
 
 ```sh
-meson setup build -Dpool_allocator:pool_max_slots=32 "-Dc_args=-DPOOL_MAX_SLOTS=32"
+meson setup build -Dpool_allocator:pool_max_slots=32
 ```
+
+`POOL_NO_MAX_ALIGN_T` and `POOL_SIMULATE_16BIT_MAU` have no option, so define them in the top-level project's `c_args`, which apply to the consumer and to subprojects. Do not repeat an exported define there with a different value, because the two definitions conflict.
 
 `pool_footprint()` reports the library's view of the layout, so a start-up check that its `instance_size_units` equals `sizeof(struct pool_t)` in the caller catches a mismatch that slipped through. [api.md](api.md#footprint) shows it.
 

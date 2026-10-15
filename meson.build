@@ -48,19 +48,20 @@ lookup_define = {
   'hash': '-DPOOL_LOOKUP_STRATEGY=POOL_LOOKUP_HASH',
 }[lookup_strategy]
 
-add_project_arguments(
-  lookup_define,
+# POOL_MAX_SLOTS, POOL_ITEM_SIZE and the atomicity mode shape struct pool_t,
+# which the caller allocates and the library indexes, so pool_dep and pool.pc
+# export them. POOL_LOOKUP_STRATEGY is read only by src/pool.c.
+layout_args = [
   '-DPOOL_MAX_SLOTS=@0@'.format(pool_max_slots),
   '-DPOOL_ITEM_SIZE=@0@'.format(pool_item_size),
-  language: 'c',
-)
+]
 
 # 'auto' leaves pool_conf.h to its own detection (C11 on hosted, volatile
 # where <stdatomic.h> is unavailable). The explicit modes pin the choice.
 if atomicity == 'c11'
-  add_project_arguments('-DPOOL_USE_C11_ATOMIC', language: 'c')
+  layout_args += '-DPOOL_USE_C11_ATOMIC'
 elif atomicity == 'volatile'
-  add_project_arguments('-DPOOL_USE_VOLATILE_ATOMIC', language: 'c')
+  layout_args += '-DPOOL_USE_VOLATILE_ATOMIC'
 endif
 
 # === Include directories ======================================================
@@ -74,6 +75,7 @@ library_sources = ['src/pool.c']
 pool_lib = static_library(
   'pool',
   library_sources,
+  c_args: layout_args + [lookup_define],
   include_directories: public_headers,
   install: true,
   install_dir: get_option('libdir'),
@@ -89,6 +91,7 @@ install_headers(
 )
 
 pool_dep = declare_dependency(
+  compile_args: layout_args,
   include_directories: public_headers,
   link_with: pool_lib,
 )
@@ -105,15 +108,15 @@ if get_option('build_tests')
     'pool_sim',
     library_sources,
     include_directories: public_headers,
-    c_args: ['-DPOOL_SIMULATE_16BIT_MAU'],
+    c_args: layout_args + [lookup_define, '-DPOOL_SIMULATE_16BIT_MAU'],
     install: false,
   )
 
   pool_sim_dep = declare_dependency(
     include_directories: public_headers,
     link_with: pool_sim_lib,
-    compile_args: ['-DPOOL_SIMULATE_16BIT_MAU'],
-    )
+    compile_args: layout_args + ['-DPOOL_SIMULATE_16BIT_MAU'],
+  )
 endif
 
 pkg = import('pkgconfig')
@@ -123,6 +126,7 @@ pkg.generate(
   filebase: 'pool',
   version: meson.project_version(),
   libraries: pool_lib,
+  extra_cflags: layout_args,
 )
 
 # === Tests ====================================================================
