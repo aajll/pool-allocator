@@ -54,8 +54,9 @@ path = "analysis/baseline/misra-baseline.json"
 # toolchain.append_defines = ["ARCH_ARM64"]
 
 # The base analysis covers C11 atomics; the volatile profile forces the other
-# rung of the ladder in pool_conf.h and keeps its own baseline. cppcheck
-# already analyses both lookup strategies' #if branches in the base run.
+# rung of the ladder in pool_conf.h and keeps its own baseline. A build
+# configured with -Dlookup_strategy=hash reports the same findings as the base
+# run, so the lookup strategy has no profile.
 [profiles.volatile]
 toolchain.defines = ["POOL_USE_VOLATILE_ATOMIC"]
 baseline.path = "analysis/baseline/misra-baseline.volatile.json"

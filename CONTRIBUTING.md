@@ -1,12 +1,10 @@
 # Contributing to pool-allocator
 
-pool is a small C library providing a static object pool allocator for
-safety-critical systems. It is designed to be safe to drop into deeply
-embedded firmware, ISR contexts, and audited code bases.
+`pool-allocator` is a small C11 static object pool. A slot handed out twice, or freed while still in use, corrupts whatever the caller stored in it, so read [design.md](docs/design.md) before you change acquisition, release or the concurrency contract.
 
 ## Getting started
 
-Install the Python tools with [uv](https://docs.astral.sh/uv/), as CI does. The MISRA analysis also needs a current `cppcheck`; CI installs it from Homebrew because the 2.13 release in Ubuntu 24.04 reports different findings. The same commands CI runs, locally:
+Install a C11 compiler and install the Python tools with [uv](https://docs.astral.sh/uv/), as CI does. The MISRA analysis also needs a current `cppcheck`; CI installs it from Homebrew because the 2.13 release in Ubuntu 24.04 reports different findings. The same commands CI runs, locally:
 
 ```sh
 # Python tools
@@ -15,157 +13,104 @@ uv tool install ninja
 uv tool install gcovr
 uv tool install misch
 
-# Configure with tests + sanitisers (CI default)
-meson setup build --buildtype=debug -Dbuild_tests=true \
-                  -Db_sanitize=address,undefined
+# Configure with tests and sanitisers (CI default)
+meson setup build --buildtype=debug -Dbuild_tests=true -Db_sanitize=address,undefined
 meson compile -C build
 meson test -C build --verbose
 
-# Volatile-mode host build (covers the TI C2000 atomicity path)
-meson setup build_volatile --buildtype=debug -Dbuild_tests=true \
-                            -Datomicity_mode=volatile
-meson compile -C build_volatile
-meson test -C build_volatile --verbose
+# The other lookup strategy and atomicity mode
+meson setup build-hash --buildtype=debug -Dbuild_tests=true -Db_sanitize=address,undefined -Dlookup_strategy=hash -Datomicity_mode=volatile
+meson compile -C build-hash && meson test -C build-hash
 
-# TI C2000 cross build (library only) - requires a user-provided
-# Meson cross file describing your TI codegen install. Place it
-# anywhere Meson searches for cross files, or pass an absolute path
-# with --cross-file=.
-meson setup build_c2000 --cross-file=ti-c2000.ini -Dbuild_tests=false
-meson compile -C build_c2000
-```
+# Release build (the configuration a downstream consumer uses)
+meson setup build-rel --buildtype=release -Dbuild_tests=false
+meson compile -C build-rel
 
-## Source style
+# ThreadSanitizer on the concurrency test (C11 mode only)
+meson setup build-tsan --buildtype=debug -Dbuild_tests=true -Dtsan=true -Datomicity_mode=c11
+meson compile -C build-tsan && meson test -C build-tsan test_pool_concurrency
 
-- Formatting is mandatory. Run `scripts/format.sh --fix` before submitting, or `scripts/format.sh` to check, as CI does. The script runs the clang-format release it pins through `uvx`.
-- 8-space indent, Linux brace style, 80-column limit. Match the existing
-  conventions; do not reformat unrelated code.
-- The Meson build system is the single source of truth. Update
-  `meson.build` / `tests/meson.build` when adding or removing source files.
-- No CMake, no Make, no other build systems.
+# Valgrind (no sanitisers; ASan and Valgrind are incompatible)
+meson setup build-mem --buildtype=debug -Dbuild_tests=true
+meson compile -C build-mem
+meson test -C build-mem --wrapper='valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all'
 
-## C language rules
-
-- C11 only (uses `_Static_assert` and, in the default mode, `_Atomic`).
-- Use fixed-width types from `<stdint.h>` / `<stdbool.h>`. Never plain
-  `int` for fixed-width fields. For byte-like buffers reachable from
-  the pool's storage, use `pool_byte_t` (defined in `pool_platform.h`)
-  so the code stays portable across 8-bit and 16-bit MAU targets.
-- No heap allocation (`malloc`, `free`, VLAs), no recursion, no
-  data-dependent loop bounds. All state lives in the caller-owned
-  `struct pool_t`.
-- Validate pointer arguments at every public-API boundary; return
-  `POOL_ERR_NULL_PTR` (or `NULL`) when a required pointer is missing.
-- Public functions return `pool_status_t` (or `void *` for the
-  pointer accessor). No `errno`, no exceptions.
-
-## Concurrency
-
-The supported contract is **single-writer / many-readers** (see the
-concurrency section of `pool.h`):
-
-- One context may call the mutating functions (`pool_init`,
-  `pool_acquire`, `pool_release`) on a pool; any number of contexts
-  may call the read-only `pool_get_pointer` / `pool_get_pointer_checked`.
-- The atomicity modes make _individual_ field accesses well-defined; they
-  do **not** make `pool_acquire` or `pool_release` atomic as a whole.
-  Two mutating contexts must be serialised by the caller.
-- `c11` mode must remain ThreadSanitizer-clean for the serialised-writer
-  / many-readers contract. Exercised by `tests/test_pool_concurrency.c`
-  and gated in CI under `-Dtsan=true`.
-- `volatile` mode is correct only on single-core targets and is
-  expected to report races under TSAN on a multi-core host — do not
-  "fix" that by changing the algorithm. The TSAN job runs `c11` only.
-
-## MISRA C:2023 awareness
-
-The library is written with MISRA C:2023 in mind (not formally
-certified). The one intentional, repository-wide advisory deviation is
-Rule 15.5 (single point of exit); guard clauses use early `return` at
-API boundaries. If your change introduces a new deviation:
-
-1. Add it to the file header deviation note (rule, site, justification).
-2. Add an inline `/* MISRA <rule> */` marker at the deviation site.
-3. Justify the deviation in the PR description.
-
-Required-rule deviations face a higher bar than advisory ones. We
-currently have a single advisory deviation (Rule 15.5) and want to keep
-it that way.
-
-## Tests and coverage
-
-- Add a test for every bug fix and every new feature.
-- Tests live in `tests/test_*.c`.
-- CI gates line and branch coverage at 100 % across both lookup strategies. Every new branch needs a test that fails when the branch is broken.
-- New code must build and pass in **both** atomicity modes
-  (`-Datomicity_mode=c11` and `-Datomicity_mode=volatile`).
-- New code must also build with the TI C2000 code generation tools
-  (library target only, warnings as errors). CI cross-builds with CGT
-  22.6.2 and 25.11.1 under `--abi=coffabi` and `--abi=eabi` for both
-  lookup strategies.
-- Run the host suite with ASan + UBSan before submitting.
-- CI also gates on `cppcheck` (warning + style + performance + portability)
-  and on `valgrind memcheck` (leak-check full, errors-for-leak-kinds=all,
-  built without sanitisers because ASan and Valgrind are incompatible).
-  New findings must either be fixed or silenced with a justified inline
-  `/* cppcheck-suppress <id> */` marker.
-
-### Running the gates locally
-
-```sh
-# Static analysis
-cppcheck --enable=warning,style,performance,portability --error-exitcode=1 \
-         --inline-suppr --std=c11 \
-         --suppress=missingIncludeSystem --suppress=unusedFunction \
-         -I include src/ include/
-
-# Memcheck (debug build with NO sanitisers)
-meson setup build_mem --buildtype=debug -Dbuild_tests=true
-meson compile -C build_mem
-meson test -C build_mem --verbose \
-  --wrapper='valgrind --error-exitcode=1 --leak-check=full \
-             --show-leak-kinds=all --track-origins=yes \
-             --errors-for-leak-kinds=all'
-
-# ThreadSanitizer on the concurrency test (c11 mode only)
-meson setup build_tsan --buildtype=debug -Dbuild_tests=true \
-                       -Dtsan=true -Datomicity_mode=c11
-meson compile -C build_tsan
-meson test -C build_tsan --verbose
-
-# Coverage across both lookup strategies (100 % line and branch)
+# Coverage across both lookup strategies (CI gate is 100% line and branch)
 for strategy in linear hash; do
-  meson setup "build-$strategy" --buildtype=debug -Dbuild_tests=true \
-    -Db_coverage=true -Dlookup_strategy=$strategy
-  meson compile -C "build-$strategy"
-  meson test -C "build-$strategy"
+  meson setup "build-cov-$strategy" --buildtype=debug -Dbuild_tests=true -Db_coverage=true -Dc_args=-fprofile-update=atomic -Dlookup_strategy=$strategy
+  meson compile -C "build-cov-$strategy" && meson test -C "build-cov-$strategy"
 done
-gcovr --root . --filter 'src/' --filter 'include/' \
-      --fail-under-line 100 --fail-under-branch 100 build-linear build-hash
+gcovr --root . --filter 'src/' --filter 'include/' --fail-under-line 100 --fail-under-branch 100 --print-summary build-cov-linear build-cov-hash
 
-# 16-bit MAU simulation (exercises the C2000 storage path on the host)
-meson setup build --buildtype=debug -Dbuild_tests=true
-meson compile -C build
-meson test -C build test_pool_16bit_sim --verbose
+# cppcheck (the CI static-analysis gate)
+cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr --std=c11 --suppress=missingIncludeSystem --suppress=unusedFunction -I include src/ include/
 
-# MISRA C:2023 against the baselines (reads build/compile_commands.json)
+# MISRA C:2023, once per atomicity mode (reads build/compile_commands.json)
 env -u MISRA_RULE_TEXTS misch run --baseline
 env -u MISRA_RULE_TEXTS misch run --baseline --profile volatile
 misch deviations
 
 # Formatting (pinned clang-format through uvx)
-scripts/format.sh
+scripts/format.sh --fix
 ```
+
+## Source style
+
+- Formatting is mandatory. Run `scripts/format.sh --fix` before submitting, or `scripts/format.sh` to check without writing, as CI does. The script pins the clang-format release and runs it through `uvx`, so an editor formatter gives the same result only when it runs the same release.
+- 8-space indent, Linux brace style, 80-column limit. Match the existing conventions and do not reformat unrelated code.
+- The Meson build system is the single source of truth. Update `meson.build` and `tests/meson.build` when you add or remove files. No CMake, no Make, and no other build systems.
+
+## C language rules
+
+- C11 only.
+- Use fixed-width types from `<stdint.h>` and `<stdbool.h>`, and never plain `int` for a fixed-width quantity. Slot flags stay `uint_least8_t`, which exists where `CHAR_BIT` is 16.
+- No heap allocation (`malloc`, `free`, VLAs), no recursion, no system calls, and no global state. Every loop is bounded by `POOL_MAX_SLOTS` or `POOL_ITEM_SIZE`.
+- Validate every pointer argument at the public API boundary and return a status rather than fault.
+- Every public identifier uses the `pool_` or `POOL_` prefix.
+- New code builds and passes in both atomicity modes and both lookup strategies, and compiles where `CHAR_BIT` is 16.
+
+## Pool rules
+
+- Clear a slot's storage before its flag becomes free, and keep the clearing behind a `volatile` access so it cannot be removed as a dead store.
+- Reject every flag value other than "allocated" on release and lookup, so a double release or an uninitialised pool cannot free a slot.
+- Keep mutation to one writer. A change that needs two writers, or that lets a reader change the pool, changes the concurrency contract and needs an issue first.
+- A change to `struct pool_t` changes the layout callers allocate. Keep it compatible within a release line, and keep every layout macro in [the integration guide](docs/integration.md#configuration) list.
+
+## MISRA C:2023
+
+The library is analysed with `misch` (cppcheck-backed MISRA C:2023 analysis), configured by `misra.toml`, over `include/` and `src/`, once with C11 atomics and once with the `volatile` profile. CI fails on any finding that is not in that mode's baseline in `analysis/baseline/`. Run it from a configured `build/` directory, with `MISRA_RULE_TEXTS` unset, as CI does. If your change introduces a finding:
+
+1. Prefer restructuring the code so the rule is satisfied. Deviate only when compliance would make the code genuinely worse, and never restructure purely to hide a finding from the checker; an honest deviation beats evasion.
+2. Suppress at the point of use with `/* cppcheck-suppress misra-c2012-<rule> ; @deviation <rationale> */`, or add a justified project-wide entry to `analysis/deviations/misra-deviations.txt` for a house-style rule.
+3. Verify with `misch run --baseline` for both modes and `misch deviations`, which requires every suppression to carry a rationale, and justify the deviation in the pull request description.
+
+Do not regenerate a baseline to admit a new finding. It changes only after a deliberate review, with `misch baseline`.
+
+## Tests and coverage
+
+- Add a test for every bug fix and every new feature.
+- Unit tests live in `tests/test_pool.c`, which also runs as `test_pool_16bit_sim` against the 16-bit storage build. The one-writer, many-readers stress test is `tests/test_pool_concurrency.c`. Each new file is listed in `tests/meson.build`.
+- Test each guard with the input that reaches it, including NULL arguments, IDs at `POOL_MAX_SLOTS`, free slots and a full pool.
+- CI enforces 100 percent line and branch coverage of `src/` and `include/` across both lookup strategies. Every new branch needs a test that fails when the branch is broken.
+- The `pool docs examples` test compiles every C code block in `README.md`, `CONTRIBUTING.md`, and `docs/` against the public headers, through `tests/docs/check_snippets.py`. A block compiles at file scope by default. On the line directly above the fence, put `<!-- snippet: body -->` for a block of statements, or `<!-- snippet: skip -->` for pseudo-code or a copy of a header definition.
+
+## Documentation
+
+| File | Purpose |
+| --- | --- |
+| `README.md` | Landing page: quick start, description, validated toolchains, and links. Keep it short. |
+| `docs/integration.md` | Requirements, installation, configuration, building, and cross builds. |
+| `docs/api.md` | Reference for initialisation, acquisition and release, pointer lookup, the footprint, the configuration macros, and recipes. |
+| `docs/design.md` | The slot model, lookup strategies, release and reuse, the concurrency contract, 16-bit-MAU storage, failure behaviour, MISRA position, and verification. |
+
+Update `docs/api.md` and the header Doxygen together when an interface changes, and check every value an example states against a build. Update `docs/design.md` when acquisition, release, the concurrency contract or the verification changes. Keep it standalone: describe how the library works, not how it was built or which other projects use it. Write prose in British English, one line per paragraph.
 
 ## API stability
 
-- `struct pool_t` is caller-owned but opaque by contract: use the API
-  functions, never touch fields directly. Its layout may change between
-  minor versions (e.g. atomicity qualifiers, platform byte width).
-- The public function signatures in `pool.h` are stable across the
-  v2.x line.
-- Breaking changes go in a new major release and require a deprecation
-  note in `CHANGELOG.md`.
+- The function signatures in `pool.h` and the configuration macros in `pool_conf.h` are stable within a major release line.
+- The values of `pool_status_t` are part of the contract, because callers store and transmit them.
+- Which slot an acquisition returns under each strategy is observable behaviour. Changing it, a signature, or a status value is a breaking change and needs a major release.
+- The members of `struct pool_t` are private, but its size is not: callers allocate it, so a layout change needs a `CHANGELOG.md` entry.
 
 ## Commits
 
@@ -173,29 +118,21 @@ Use Conventional Commits:
 
 - `feat: ...` new feature
 - `fix: ...` bug fix
-- `doc: ...` documentation only
+- `docs: ...` documentation only
 - `test: ...` test-only changes
 - `chore: ...` build, CI, release work
-- `refactor: ...` code change that neither fixes a bug nor adds a feature
+- `refactor: ...` a change that neither fixes a bug nor adds a feature
 
-Keep the subject under ~70 characters. Use the body to explain _why_ the
-change is needed, not _what_ the diff already shows.
+Keep the subject under about 70 characters. Use the body to explain why the change is needed.
 
 ## Pull requests
 
-- Open an issue first for non-trivial changes so the design can be agreed
-  before implementation.
-- Keep PRs focused. One feature or one fix per PR.
-- All CI checks must pass: host tests in both atomicity modes, the
-  release build matrix, cppcheck, valgrind memcheck (both atomicity
-  modes), ThreadSanitizer on the concurrency test, and the 16-bit MAU
-  simulation, the TI C2000 cross-build, and the 100 % line and branch
-  coverage gate. ASan + UBSan are folded
-  into the host test job.
-- Any new MISRA deviation must be flagged in the PR description and
-  added to the deviation record in `src/pool.c`.
+- Open an issue first for non-trivial changes, and always for a change to acquisition order, release or the concurrency contract, so the design can be agreed before implementation.
+- Keep pull requests focused: one feature or one fix.
+- All CI checks must pass.
+- Add a `CHANGELOG.md` entry under `## [Unreleased]` for a user-visible change.
+- Flag any new MISRA deviation, and any change to the layout of `struct pool_t`, in the description.
 
 ## When in doubt
 
-Open an issue and discuss before writing code. The library is small
-enough that even modest design changes have outsized implications.
+Open an issue. The library is small, but every firmware that stores objects in it trusts that a slot belongs to one owner at a time.
