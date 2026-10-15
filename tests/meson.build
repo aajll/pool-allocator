@@ -3,6 +3,7 @@
 test_exe = executable(
   'test_pool',
   'test_pool.c',
+  c_args: lookup_define,
   dependencies: [pool_dep],
 )
 
@@ -16,6 +17,7 @@ test('test_pool', test_exe)
 test_16bit_exe = executable(
   'test_pool_16bit',
   'test_pool.c',
+  c_args: lookup_define,
   dependencies: [pool_sim_dep],
 )
 

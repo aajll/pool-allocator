@@ -88,6 +88,50 @@ jobs:
         run: meson compile -C build
 
   # ---------------------------------------------------------------------------
+  # Non-default layout options. The tests compile against pool_dep only, so
+  # they fail if the dependency does not carry the layout defines; the
+  # installed pool.pc must carry them too.
+  # ---------------------------------------------------------------------------
+  layout-options:
+    name: "Layout options (4 slots of 32)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Install meson and ninja
+        run: uv tool install meson && uv tool install ninja
+
+      - name: Configure
+        run: >
+          meson setup build
+          --buildtype=debug
+          -Dbuild_tests=true
+          -Db_sanitize=address,undefined
+          -Dpool_max_slots=4
+          -Dpool_item_size=32
+          -Dlookup_strategy=hash
+          -Datomicity_mode=volatile
+
+      - name: Test
+        run: meson test -C build --verbose
+
+      - name: Check the installed pkg-config flags
+        run: |
+          meson install -C build --destdir "$PWD/staging"
+          export PKG_CONFIG_PATH="$(dirname "$(find staging -name pool.pc)")"
+          flags="$(pkg-config --cflags pool)"
+          echo "$flags"
+          for define in -DPOOL_MAX_SLOTS=4 -DPOOL_ITEM_SIZE=32 -DPOOL_USE_VOLATILE_ATOMIC; do
+            case " $flags " in
+              *" $define "*) ;;
+              *) echo "missing $define"; exit 1 ;;
+            esac
+          done
+
+  # ---------------------------------------------------------------------------
   # Static analysis with cppcheck. Runs against the source and the public
   # headers; fails on any warning/style/performance/portability finding
   # that is not silenced by an inline `cppcheck-suppress` comment.
