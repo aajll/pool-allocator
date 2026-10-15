@@ -10,10 +10,6 @@
 #ifndef POOL_H_
 #define POOL_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* ================ INCLUDES ================================================ */
 
 #include "pool_conf.h"
@@ -336,9 +332,5 @@ pool_status_t pool_get_pointer_checked(pool_handle_t p_pool, const pool_id_t id,
 pool_footprint_t pool_footprint(void);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* POOL_H_ */
