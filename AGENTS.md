@@ -61,7 +61,7 @@ Valgrind, coverage and cppcheck commands are in `CONTRIBUTING.md`.
 
 ### 1.2 Notes
 
-- `meson setup` generates `pool_version.h` into the build directory; `pool.h` does not include it.
+- `include/pool.h` defines the version macros, and `meson setup` fails when they differ from `project(version:)`, so a release updates both. `include/pool_version.h` is a deprecated header that includes `pool.h`.
 - The build produces only a static library, installed as `libpool.a` with headers under `pool/` and `pool.pc`. Meson options: `pool_max_slots`, `pool_item_size`, `lookup_strategy`, `atomicity_mode`, `build_tests`, `tsan`.
 - `POOL_MAX_SLOTS`, `POOL_ITEM_SIZE`, the atomicity mode, `POOL_NO_MAX_ALIGN_T` and `POOL_SIMULATE_16BIT_MAU` shape `struct pool_t`. The Meson options set them for the library build only, so callers need the same `-D` definitions.
 

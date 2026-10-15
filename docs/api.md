@@ -168,3 +168,25 @@ cc -DPOOL_MAX_SLOTS=64U -DPOOL_RAM_BUDGET_OCTETS=4096 -Iinclude -c src/pool.c
 ```
 
 On x86-64, 64 slots of 64 bytes take 4176 octets, so this build stops with "pool instance exceeds POOL_RAM_BUDGET_OCTETS". The check runs in every translation unit that includes `pool.h`.
+
+## Version
+
+`pool.h` defines the release it belongs to, so a copied-in header still identifies itself:
+
+<!-- snippet: skip -->
+```c
+#define POOL_VERSION_MAJOR 2
+#define POOL_VERSION_MINOR 1
+#define POOL_VERSION_PATCH 0
+#define POOL_VERSION "2.1.0"
+```
+
+`POOL_VERSION_NUMBER` is `MAJOR * 10000 + MINOR * 100 + PATCH` as a `long`, so it holds any version where `int` is 16 bits. Compare it in the preprocessor to require a minimum release:
+
+```c
+#if POOL_VERSION_NUMBER < 20100L
+#error "pool 2.1.0 or later is required"
+#endif
+```
+
+`POOL_VERSION_STRING` is the same string as `POOL_VERSION`. `pool_version.h` is a deprecated header that includes `pool.h`, kept so existing includes compile until the next major release.

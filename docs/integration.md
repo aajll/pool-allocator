@@ -25,7 +25,7 @@ Keep the three headers in the same directory, because `pool.h` includes the othe
 #include "pool.h"
 ```
 
-`pool_version.h` exists only in Meson builds, which generate it.
+`pool.h` defines the version macros described in [api.md](api.md#version).
 
 ## Meson subproject
 
@@ -62,10 +62,9 @@ The install contains the static archive `libpool.a`, the headers in a `pool/` su
 <!-- snippet: skip -->
 ```c
 #include <pool/pool.h>
-#include <pool/pool_version.h>
 ```
 
-`pool_version.h` defines `POOL_VERSION` as the version string and `POOL_VERSION_MAJOR`, `POOL_VERSION_MINOR` and `POOL_VERSION_PATCH` as integers. `POOL_VERSION_STRING` repeats the version, assembled from the three numbers.
+`pool_version.h` is installed beside it as a deprecated header that includes `pool.h`.
 
 An installed library keeps the configuration it was built with, and `pool.pc` does not record it. Build applications with the same definitions.
 
