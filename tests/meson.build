@@ -23,6 +23,17 @@ test_16bit_exe = executable(
 
 test('test_pool_16bit_sim', test_16bit_exe)
 
+# Slots wider than 16 bits of storage units, so the footprint must report
+# POOL_ITEM_SIZE in full.
+test_wide_exe = executable(
+  'test_pool_wide_slots',
+  ['test_pool.c'] + library_sources,
+  c_args: [lookup_define, '-DPOOL_MAX_SLOTS=4', '-DPOOL_ITEM_SIZE=65552'],
+  include_directories: public_headers,
+)
+
+test('test_pool_wide_slots', test_wide_exe)
+
 # Concurrency stress test - single writer, many readers - exercises the
 # documented threading contract. TSAN is opt-in via -Dtsan=true (it is
 # incompatible with ASan, so it lives in its own override).

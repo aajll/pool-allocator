@@ -80,7 +80,7 @@ typedef struct {
         size_t payload_units;
         size_t overhead_units;
         pool_id_t capacity;
-        uint16_t item_size;
+        size_t item_size;
         uint_least8_t addr_unit_bits;
 } pool_footprint_t;
 ```
@@ -94,7 +94,7 @@ pool_footprint_t pool_footprint(void);
 - `instance_size_units` is `sizeof(struct pool_t)`, including padding.
 - `payload_units` is `POOL_MAX_SLOTS * POOL_ITEM_SIZE`, also available as the constant `POOL_PAYLOAD_UNITS`.
 - `overhead_units` is the difference: status flags, cursor and padding.
-- `capacity` is `POOL_MAX_SLOTS`, `item_size` is `POOL_ITEM_SIZE` reduced to 16 bits, and `addr_unit_bits` is 8 or 16.
+- `capacity` is `POOL_MAX_SLOTS`, `item_size` is `POOL_ITEM_SIZE`, and `addr_unit_bits` is 8 or 16.
 
 With the default configuration on x86-64 the instance is 1056 bytes: 1024 of payload and 32 of overhead, because the structure is padded to the 16-byte alignment of `max_align_t`.
 

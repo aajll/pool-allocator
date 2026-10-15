@@ -83,8 +83,6 @@ The slot count, slot size, atomicity mode and alignment type shape `struct pool_
 | Library and caller built with different layouts | Undefined; the library reads and writes outside the caller's structure. |
 | Invalid configuration | Compile error from a `_Static_assert`. |
 
-`pool_footprint` reports `item_size` as a `uint16_t`, so a slot size above 65535 units is reduced modulo 65536 in that field; the pool itself uses the full value.
-
 ## MISRA C:2023
 
 The library is analysed with [`misch`](https://pypi.org/project/misch/), a cppcheck-based MISRA C:2023 checker, over `include/` and `src/`, once with C11 atomics and once with `POOL_USE_VOLATILE_ATOMIC`. Each run has its own baseline of accepted findings in `analysis/baseline/`, and CI fails on any finding outside it. The version macros in `pool.h` carry an inline deviation of Rule 2.5 (unused macro), because they exist for consumers and the library does not use them. Both baselines hold the same 33 findings:
