@@ -6,9 +6,15 @@ embedded firmware, ISR contexts, and audited code bases.
 
 ## Getting started
 
-The same commands CI runs, locally:
+Install the Python tools with [uv](https://docs.astral.sh/uv/), as CI does. The MISRA analysis also needs a current `cppcheck`; CI installs it from Homebrew because the 2.13 release in Ubuntu 24.04 reports different findings. The same commands CI runs, locally:
 
 ```sh
+# Python tools
+uv tool install meson
+uv tool install ninja
+uv tool install gcovr
+uv tool install misch
+
 # Configure with tests + sanitisers (CI default)
 meson setup build --buildtype=debug -Dbuild_tests=true \
                   -Db_sanitize=address,undefined
@@ -31,8 +37,7 @@ meson compile -C build_c2000
 
 ## Source style
 
-- `.clang-format` is mandatory. Run `clang-format -i` on every modified
-  `.c` / `.h` file before submitting.
+- Formatting is mandatory. Run `scripts/format.sh --fix` before submitting, or `scripts/format.sh` to check, as CI does. The script runs the clang-format release it pins through `uvx`.
 - 8-space indent, Linux brace style, 80-column limit. Match the existing
   conventions; do not reformat unrelated code.
 - The Meson build system is the single source of truth. Update
@@ -142,6 +147,14 @@ gcovr --root . --filter 'src/' --filter 'include/' \
 meson setup build --buildtype=debug -Dbuild_tests=true
 meson compile -C build
 meson test -C build test_pool_16bit_sim --verbose
+
+# MISRA C:2023 against the baselines (reads build/compile_commands.json)
+env -u MISRA_RULE_TEXTS misch run --baseline
+env -u MISRA_RULE_TEXTS misch run --baseline --profile volatile
+misch deviations
+
+# Formatting (pinned clang-format through uvx)
+scripts/format.sh
 ```
 
 ## API stability

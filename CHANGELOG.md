@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI gates line and branch coverage at 100 % across both lookup strategies, up from 80 % line and 70 % branch on the linear strategy alone.
 - `pool_release` and `pool_get_pointer` no longer repeat the slot bounds check after the ID range check, and `pool_get_pointer_checked` relies on `pool_get_pointer` for the ID range check. Results are unchanged.
 
+- CI runs a MISRA C:2023 analysis with `misch` for both atomicity modes against baselines in `analysis/baseline/` that record the existing findings, and checks formatting with the clang-format release pinned in `scripts/format.sh`.
+- CI installs Meson, Ninja and gcovr with `uv` instead of `pip`, and the Meson files and tests carry SPDX licence headers.
+
 - Added security policy, SPDX headers, cleaned ignore rules, README badge correction, and license copyright normalisation.
 
 ## [2.1.0] - 2026-05-29
