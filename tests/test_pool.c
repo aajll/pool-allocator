@@ -9,6 +9,7 @@
  */
 
 #include "pool.h"
+#include "pool_version.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -627,6 +628,21 @@ test_pool_footprint(void)
         return 0;
 }
 
+/* The deprecated version header still exposes the macros from pool.h. */
+static int
+test_version_macros(void)
+{
+        if (POOL_VERSION_NUMBER
+            != ((POOL_VERSION_MAJOR * 10000L) + (POOL_VERSION_MINOR * 100L)
+                + POOL_VERSION_PATCH)) {
+                return 1;
+        }
+        if (POOL_VERSION_STRING[0] == '\0') {
+                return 1;
+        }
+        return 0;
+}
+
 /* =========================================================================
  * Entry point
  * ========================================================================= */
@@ -634,7 +650,7 @@ test_pool_footprint(void)
 int
 main(void)
 {
-        printf("Running %d unit tests...\n\n", 19);
+        printf("Running %d unit tests...\n\n", 20);
 
         RUN_TEST(test_pool_init);
         RUN_TEST(test_pool_init_null_ptr);
@@ -655,6 +671,7 @@ main(void)
         RUN_TEST(test_pool_release_clears_memory);
         RUN_TEST(test_pool_no_overlap);
         RUN_TEST(test_pool_footprint);
+        RUN_TEST(test_version_macros);
 
         printf("\n%d/%d tests passed.\n", g_tests_run - g_tests_failed,
                g_tests_run);

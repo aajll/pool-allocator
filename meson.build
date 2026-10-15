@@ -4,6 +4,7 @@ project(
   'pool_allocator',
   'c',
   version: '2.1.0',
+  meson_version: '>=0.57.0',
   default_options: [
     'c_std=c11',
     'warning_level=3',
@@ -13,27 +14,27 @@ project(
 
 project_description = 'Static object pool allocator for safety-critical systems.'
 
-# === Version header ===========================================================
+# === Version ==================================================================
+# include/pool.h defines the version macros, so a copy-in build has them.
+# Configuration fails when they differ from the project version.
 
-ver = meson.project_version().split('.')
-
-major = ver[0].to_int()
-minor = ver[1].to_int()
-patch = ver[2].to_int()
-
-conf = configuration_data()
-conf.set_quoted('VERSION', meson.project_version())
-conf.set('MAJOR', major)
-conf.set('MINOR', minor)
-conf.set('PATCH', patch)
-
-generated_version_header = configure_file(
-  input: 'config' / 'pool_version.h.in',
-  output: 'pool_version.h',
-  configuration: conf,
-  install: true,
-  install_dir: get_option('includedir') / 'pool',
-)
+fs = import('fs')
+version_parts = meson.project_version().split('.')
+version_macros = {
+  'POOL_VERSION_MAJOR': version_parts[0],
+  'POOL_VERSION_MINOR': version_parts[1],
+  'POOL_VERSION_PATCH': version_parts[2],
+  'POOL_VERSION': '"' + meson.project_version() + '"',
+}
+header_lines = []
+foreach line : fs.read('include' / 'pool.h').split('\n')
+  header_lines += ' '.join(line.split())
+endforeach
+foreach name, value : version_macros
+  if '#define @0@ @1@'.format(name, value) not in header_lines
+    error('include/pool.h must define @0@ as @1@'.format(name, value))
+  endif
+endforeach
 
 # === Build-time configuration =================================================
 
@@ -65,7 +66,6 @@ endif
 # === Include directories ======================================================
 
 public_headers = include_directories('include')
-generated_headers = include_directories('.')
 
 # === Library ==================================================================
 
@@ -74,20 +74,24 @@ library_sources = ['src/pool.c']
 pool_lib = static_library(
   'pool',
   library_sources,
-  include_directories: [public_headers, generated_headers],
+  include_directories: public_headers,
   install: true,
   install_dir: get_option('libdir'),
 )
 
 install_headers(
-  ['include/pool.h', 'include/pool_conf.h', 'include/pool_platform.h'],
+  [
+    'include/pool.h',
+    'include/pool_conf.h',
+    'include/pool_platform.h',
+    'include/pool_version.h',
+  ],
   subdir: 'pool',
 )
 
 pool_dep = declare_dependency(
-  include_directories: [public_headers, generated_headers],
+  include_directories: public_headers,
   link_with: pool_lib,
-  sources: generated_version_header,
 )
 
 meson.override_dependency('pool', pool_dep)
@@ -101,17 +105,16 @@ if get_option('build_tests')
   pool_sim_lib = static_library(
     'pool_sim',
     library_sources,
-    include_directories: [public_headers, generated_headers],
+    include_directories: public_headers,
     c_args: ['-DPOOL_SIMULATE_16BIT_MAU'],
     install: false,
   )
 
   pool_sim_dep = declare_dependency(
-    include_directories: [public_headers, generated_headers],
+    include_directories: public_headers,
     link_with: pool_sim_lib,
     compile_args: ['-DPOOL_SIMULATE_16BIT_MAU'],
-    sources: generated_version_header,
-  )
+    )
 endif
 
 pkg = import('pkgconfig')

@@ -87,7 +87,7 @@ The slot count, slot size, atomicity mode and alignment type shape `struct pool_
 
 ## MISRA C:2023
 
-The library is analysed with [`misch`](https://pypi.org/project/misch/), a cppcheck-based MISRA C:2023 checker, over `include/` and `src/`, once with C11 atomics and once with `POOL_USE_VOLATILE_ATOMIC`. Each run has its own baseline of accepted findings in `analysis/baseline/`, and CI fails on any finding outside it. Both hold the same 33 findings:
+The library is analysed with [`misch`](https://pypi.org/project/misch/), a cppcheck-based MISRA C:2023 checker, over `include/` and `src/`, once with C11 atomics and once with `POOL_USE_VOLATILE_ATOMIC`. Each run has its own baseline of accepted findings in `analysis/baseline/`, and CI fails on any finding outside it. The version macros in `pool.h` carry an inline deviation of Rule 2.5 (unused macro), because they exist for consumers and the library does not use them. Both baselines hold the same 33 findings:
 
 | Rule | Findings | Cause |
 | --- | --- | --- |
