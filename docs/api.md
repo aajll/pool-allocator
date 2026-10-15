@@ -189,4 +189,4 @@ On x86-64, 64 slots of 64 bytes take 4176 octets, so this build stops with "pool
 #endif
 ```
 
-`POOL_VERSION_STRING` is the same string as `POOL_VERSION`. `pool_version.h` is a deprecated header that includes `pool.h`, kept so existing includes compile until the next major release.
+`POOL_VERSION_STRING` is the same string as `POOL_VERSION`.

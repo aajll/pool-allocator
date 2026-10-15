@@ -9,7 +9,6 @@
  */
 
 #include "pool.h"
-#include "pool_version.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -628,7 +627,7 @@ test_pool_footprint(void)
         return 0;
 }
 
-/* The deprecated version header still exposes the macros from pool.h. */
+/* The version number agrees with its parts. */
 static int
 test_version_macros(void)
 {

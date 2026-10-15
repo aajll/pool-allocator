@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `pool.h` defines `POOL_VERSION_MAJOR`, `_MINOR`, `_PATCH`, `POOL_VERSION`, `POOL_VERSION_STRING` and a new `POOL_VERSION_NUMBER` (`long`, `MAJOR * 10000 + MINOR * 100 + PATCH`), so a copied-in header carries its version. `pool_version.h` is no longer generated; it is installed as a deprecated header that includes `pool.h`. Meson fails to configure when the header and `project(version:)` disagree, and the build needs Meson 0.57 or later.
+- `pool.h` defines `POOL_VERSION_MAJOR`, `_MINOR`, `_PATCH`, `POOL_VERSION`, `POOL_VERSION_STRING` and a new `POOL_VERSION_NUMBER` (`long`, `MAJOR * 10000 + MINOR * 100 + PATCH`), so a copied-in header carries its version. Meson fails to configure when the header and `project(version:)` disagree, and the build needs Meson 0.57 or later.
 - CI gates line and branch coverage at 100 % across both lookup strategies, up from 80 % line and 70 % branch on the linear strategy alone.
 - `pool_release` and `pool_get_pointer` no longer repeat the slot bounds check after the ID range check, and `pool_get_pointer_checked` relies on `pool_get_pointer` for the ID range check. Results are unchanged.
 
@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The README is a short landing page, with the integration guide, API reference and design record in `docs/`. `CONTRIBUTING.md` and `AGENTS.md` follow the same layout, and a `pool docs examples` test compiles every C example in the documentation.
 - Added security policy, SPDX headers, cleaned ignore rules, README badge correction, and license copyright normalisation.
+
+### Removed
+
+- `pool_version.h`. `pool.h` defines the version macros.
 
 ## [2.1.0] - 2026-05-29
 

@@ -64,8 +64,6 @@ The install contains the static archive `libpool.a`, the headers in a `pool/` su
 #include <pool/pool.h>
 ```
 
-`pool_version.h` is installed beside it as a deprecated header that includes `pool.h`.
-
 An installed library keeps the configuration it was built with, and `pool.pc` does not record it. Build applications with the same definitions.
 
 ## Configuration
