@@ -70,7 +70,7 @@ public_headers = include_directories('include')
 
 # === Library ==================================================================
 
-library_sources = ['src/pool.c']
+library_sources = files('src/pool.c')
 
 pool_lib = static_library(
   'pool',

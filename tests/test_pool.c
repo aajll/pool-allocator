@@ -595,7 +595,7 @@ test_pool_footprint(void)
         if (fp.capacity != (pool_id_t)POOL_MAX_SLOTS) {
                 return 1;
         }
-        if (fp.item_size != (uint16_t)POOL_ITEM_SIZE) {
+        if (fp.item_size != (size_t)POOL_ITEM_SIZE) {
                 return 1;
         }
         if (fp.addr_unit_bits != (uint8_t)POOL_ADDR_UNIT_BITS) {

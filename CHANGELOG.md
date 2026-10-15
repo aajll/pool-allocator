@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `pool_footprint_t::item_size` is `size_t` instead of `uint16_t`, so `pool_footprint()` reports a `POOL_ITEM_SIZE` above 65535 in full rather than modulo 65536. Code that stores the field in a 16-bit object needs a wider one.
 - `pool_dep` and `pool.pc` carry `POOL_MAX_SLOTS`, `POOL_ITEM_SIZE` and the atomicity define from the Meson options, so a consumer's `struct pool_t` has the library's layout. A consumer built with `-Dpool_allocator:pool_max_slots=4` allocated 1056 bytes where the library used 272, and the opposite choice let the library write past the caller's object.
 - `pool_footprint_t::addr_unit_bits` is `uint_least8_t` instead of `uint8_t`, so `pool.h` compiles where `CHAR_BIT == 16`. Byte-addressed targets see the same type.
 
