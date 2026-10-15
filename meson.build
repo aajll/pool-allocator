@@ -84,7 +84,6 @@ install_headers(
     'include/pool.h',
     'include/pool_conf.h',
     'include/pool_platform.h',
-    'include/pool_version.h',
   ],
   subdir: 'pool',
 )
