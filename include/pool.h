@@ -80,9 +80,9 @@
 /* cppcheck-suppress-begin misra-c2012-2.5 ; @deviation Public version macros
  * for consumer diagnostics and #if checks; the library does not use them. */
 #define POOL_VERSION_MAJOR  2
-#define POOL_VERSION_MINOR  1
+#define POOL_VERSION_MINOR  2
 #define POOL_VERSION_PATCH  0
-#define POOL_VERSION        "2.1.0"
+#define POOL_VERSION        "2.2.0"
 #define POOL_VERSION_STRING POOL_VERSION
 #define POOL_VERSION_NUMBER                                                    \
         ((POOL_VERSION_MAJOR * 10000L) + (POOL_VERSION_MINOR * 100L)           \
