@@ -176,16 +176,16 @@ On x86-64, 64 slots of 64 bytes take 4176 octets, so this build stops with "pool
 <!-- snippet: skip -->
 ```c
 #define POOL_VERSION_MAJOR 2
-#define POOL_VERSION_MINOR 1
+#define POOL_VERSION_MINOR 2
 #define POOL_VERSION_PATCH 0
-#define POOL_VERSION "2.1.0"
+#define POOL_VERSION "2.2.0"
 ```
 
 `POOL_VERSION_NUMBER` is `MAJOR * 10000 + MINOR * 100 + PATCH` as a `long`, so it holds any version where `int` is 16 bits. Compare it in the preprocessor to require a minimum release:
 
 ```c
-#if POOL_VERSION_NUMBER < 20100L
-#error "pool 2.1.0 or later is required"
+#if POOL_VERSION_NUMBER < 20200L
+#error "pool 2.2.0 or later is required"
 #endif
 ```
 
